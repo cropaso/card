@@ -1,0 +1,571 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>CardMarket — Demo (Learning)</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#070707;
+    --panel:#0f0f0f;
+    --accent:#e11;
+    --accent-2:#ff5757;
+    --muted:#a6a6a6;
+    --glass: rgba(255,255,255,0.03);
+    --glass-2: rgba(255,255,255,0.02);
+    --card-height:220px;
+    --radius:12px;
+    font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:
+    radial-gradient(800px 400px at 10% 10%, rgba(225,17,17,0.04), transparent),
+    linear-gradient(180deg,#050505 0%, #0b0b0b 100%);
+    color:#fff;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  /* header / nav */
+  header{position:sticky;top:0;z-index:60;background:linear-gradient(180deg,rgba(0,0,0,0.55),transparent);backdrop-filter: blur(6px);border-bottom:1px solid rgba(255,255,255,0.02)}
+  .nav{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:14px}
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{
+    width:46px;height:46px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#7a0000);
+    display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:18px;
+    box-shadow:0 8px 30px rgba(225,17,17,0.12);transition:transform .28s ease;
+  }
+  .logo:hover{transform:scale(1.06) rotate(-6deg)}
+  nav ul{display:flex;gap:14px;align-items:center;margin:0;padding:0;list-style:none}
+  nav a.navlink{padding:8px 12px;border-radius:10px;transition:all .2s ease;color:var(--muted);font-weight:600}
+  nav a.navlink:hover{background:var(--glass);color:#fff;transform:translateY(-3px)}
+  .cta{display:flex;gap:10px;align-items:center}
+  .btn{padding:8px 14px;border-radius:10px;background:transparent;border:1px solid rgba(255,255,255,0.06);cursor:pointer;color:#fff;font-weight:700;transition:all .22s}
+  .btn.primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));box-shadow:0 12px 36px rgba(225,17,17,0.12);border:0}
+  .hamburger{display:none;padding:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.04);cursor:pointer}
+  /* hero */
+  .hero{max-width:1200px;margin:28px auto;padding:28px;display:grid;grid-template-columns:1fr 420px;gap:22px;align-items:center}
+  .hero-left h1{font-size:clamp(26px,4vw,44px);margin:0 0 10px 0;line-height:1.02}
+  .accent{color:var(--accent)}
+  .hero-left p{color:var(--muted);margin:0 0 18px}
+  .hero-actions{display:flex;gap:10px;align-items:center}
+  .hero-right{background:linear-gradient(180deg,#0d0d0d,#111);border-radius:16px;padding:18px;box-shadow:0 18px 40px rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.02)}
+  .card-preview{height:220px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:12px;padding:12px;position:relative;overflow:hidden}
+  .card-image{width:320px;height:180px;border-radius:12px;padding:18px;box-shadow:0 14px 40px rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.02);transform:rotate(-6deg);background:linear-gradient(135deg,#151515,#220101)}
+  /* sections */
+  .section{max-width:1200px;margin:22px auto;padding:20px}
+  .section h2{margin:0 0 12px}
+  /* cards grid */
+  .cards-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  @media (max-width:1100px){.hero{grid-template-columns:1fr;}.cards-grid{grid-template-columns:repeat(2,1fr)}}
+  @media (max-width:680px){.cards-grid{grid-template-columns:1fr}nav ul{display:none}.hamburger{display:block}}
+  .card-wrap{perspective:1400px}
+  .card-item{
+    height:var(--card-height);
+    border-radius:var(--radius);
+    transform-style:preserve-3d;
+    transition:transform .7s cubic-bezier(.2,.9,.3,1);
+    position:relative;
+  }
+  .card-item:hover{transform:translateY(-10px)}
+  .card-face{position:absolute;inset:0;border-radius:var(--radius);backface-visibility:hidden;display:flex;flex-direction:column;justify-content:space-between;padding:18px;box-shadow:0 12px 30px rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.03)}
+  .card-front{background:linear-gradient(135deg,#111,#0d0d0d)}
+  .card-back{transform:rotateY(180deg);background:linear-gradient(135deg,#1b0000,#3a0000)}
+  .card-top{display:flex;justify-content:space-between;align-items:flex-start}
+  .chip{width:48px;height:34px;border-radius:6px;background:linear-gradient(90deg,#fff2,#fff9);opacity:.85}
+  .card-logo{font-weight:800;color:var(--accent);font-size:16px}
+  .card-name{font-size:16px;margin:8px 0 0;color:#fff}
+  .card-desc{color:var(--muted);font-size:13px;margin:6px 0 0}
+  .price-tag{font-weight:800;color:#fff;font-size:20px}
+  .features{display:flex;gap:8px;flex-wrap:wrap}
+  .feature{background:rgba(255,255,255,0.03);padding:6px 10px;border-radius:8px;font-size:12px;color:var(--muted)}
+  .card-footer{display:flex;justify-content:space-between;align-items:center}
+  .view-btn{padding:8px 12px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.05);cursor:pointer;transition:all .18s}
+  .view-btn:hover{transform:translateY(-4px);border-color:var(--accent)}
+  /* flip effect container (click to flip) */
+  .flip-container{position:relative;perspective:1200px}
+  .flippable{transition:transform .7s;transform-style:preserve-3d;position:relative;height:100%}
+  .flipped{transform:rotateY(180deg)}
+  /* pricing */
+  .pricing-grid{display:flex;gap:16px;flex-wrap:wrap}
+  .plan{flex:1;min-width:220px;border-radius:12px;padding:18px;background:linear-gradient(180deg,#0f0f0f,#111);border:1px solid rgba(255,255,255,0.03);transition:transform .22s}
+  .plan:hover{transform:translateY(-10px);box-shadow:0 20px 50px rgba(225,17,17,0.06)}
+  .plan .title{font-weight:800;font-size:20px}
+  .plan .price{font-size:20px;margin:8px 0;color:var(--accent)}
+  .plan ul{padding-left:18px;color:var(--muted)}
+  /* contact */
+  .contact-grid{display:grid;grid-template-columns:1fr 420px;gap:18px}
+  @media (max-width:980px){.contact-grid{grid-template-columns:1fr}}
+  .contact-panel{background:linear-gradient(180deg,#0f0f0f,#111);padding:18px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
+  .contact-item{display:flex;gap:12px;align-items:center;padding:10px 0}
+  .icon-box{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(255,255,255,0.03),transparent);border:1px solid rgba(255,255,255,0.02)}
+  /* forms */
+  form{display:flex;flex-direction:column;gap:12px}
+  .input{
+    background:transparent;border:1px solid rgba(255,255,255,0.06);padding:12px;border-radius:10px;color:#fff;outline:none;transition:box-shadow .18s, transform .12s;
+  }
+  .input:focus{box-shadow:0 6px 30px rgba(225,17,17,0.08);transform:translateY(-4px)}
+  .small{font-size:13px;color:var(--muted)}
+  .footer{margin-top:40px;padding:28px 20px;border-top:1px solid rgba(255,255,255,0.02);background:linear-gradient(180deg,transparent,#050505)}
+  .footer-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:8px}
+  .socials{display:flex;gap:12px}
+  /* animations */
+  .float{animation:floaty 6s ease-in-out infinite}
+  @keyframes floaty{0%{transform:translateY(0)}50%{transform:translateY(-8px)}100%{transform:translateY(0)}}
+  .fade-up{opacity:0;transform:translateY(12px);animation:fadeUp .6s forwards}
+  @keyframes fadeUp{to{opacity:1;transform:none}}
+  /* mobile nav overlay */
+  .mobile-menu{position:fixed;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0.9), rgba(0,0,0,0.95));display:none;flex-direction:column;padding:40px;z-index:90}
+  .mobile-menu.show{display:flex}
+  .mobile-menu a{padding:12px 0;font-size:20px;color:#fff}
+  /* small helpers */
+  .muted{color:var(--muted)}
+  .center{display:flex;align-items:center;justify-content:center}
+  /* subtle scroll behavior */
+  html{scroll-behavior:smooth}
+</style>
+</head>
+<body>
+<header>
+  <div class="nav">
+    <div class="brand">
+      <div class="logo">CM</div>
+      <div>
+        <div style="font-weight:800">CardMarket</div>
+        <div style="font-size:12px;color:var(--muted)">Demo • Learning only</div>
+      </div>
+    </div>
+
+    <nav>
+      <ul>
+        <li><a class="navlink" href="#home">Home</a></li>
+        <li><a class="navlink" href="#cards">Cards</a></li>
+        <li><a class="navlink" href="#pricing">Pricing</a></li>
+        <li><a class="navlink" href="#contact">Contact</a></li>
+      </ul>
+    </nav>
+
+    <div class="cta">
+      <button class="btn ghost" id="loginBtn">Login</button>
+      <button class="btn primary" id="registerBtn">Register</button>
+      <button class="hamburger" id="hamburger" aria-label="open menu">☰</button>
+    </div>
+  </div>
+</header>
+
+<!-- mobile menu -->
+<div class="mobile-menu" id="mobileMenu" aria-hidden="true">
+  <a href="#home" class="mobile-link">Home</a>
+  <a href="#cards" class="mobile-link">Cards</a>
+  <a href="#pricing" class="mobile-link">Pricing</a>
+  <a href="#contact" class="mobile-link">Contact</a>
+  <div style="margin-top:auto;display:flex;gap:10px">
+    <button class="btn ghost" id="mobileLogin">Login</button>
+    <button class="btn primary" id="mobileRegister">Register</button>
+  </div>
+</div>
+
+<!-- HERO -->
+<section class="hero" id="home">
+  <div class="hero-left fade-up" style="animation-delay:.05s">
+    <h1>Modern <span class="accent">Credit Card</span> comparison & demo UI — learning project</h1>
+    <p>Responsive single-file demo implementing animated UI components, card listings, pricing plans, crypto icons, and client-side validation. <strong>This is for learning/demo only.</strong></p>
+    <div class="hero-actions">
+      <button class="btn primary" onclick="document.getElementById('cards').scrollIntoView({behavior:'smooth'})">Browse Cards</button>
+      <button class="btn ghost" onclick="document.getElementById('pricing').scrollIntoView({behavior:'smooth'})">Pricing</button>
+    </div>
+    <div style="margin-top:18px;color:var(--muted);font-size:13px">Demo contact: <span class="muted">cropaso@hotmail.com</span></div>
+  </div>
+
+  <div class="hero-right fade-up" style="animation-delay:.12s">
+    <div style="display:flex;gap:12px;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-weight:800">Featured</div>
+        <div style="color:var(--muted);font-size:13px">Top cards hand-picked for demo</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <!-- animated crypto icons -->
+        <svg width="36" height="36" viewBox="0 0 24 24" class="float" style="transform:scale(1.05)">
+          <circle cx="12" cy="12" r="11" fill="#f7931a"></circle>
+          <text x="12" y="16" font-size="12" font-weight="700" text-anchor="middle" fill="#fff" font-family="Inter">B</text>
+        </svg>
+        <svg width="36" height="36" viewBox="0 0 24 24" class="float" style="animation-delay:.2s">
+          <circle cx="12" cy="12" r="11" fill="#627eea"></circle>
+          <text x="12" y="16" font-size="10" font-weight="700" text-anchor="middle" fill="#fff" font-family="Inter">Ξ</text>
+        </svg>
+      </div>
+    </div>
+
+    <div class="card-preview" style="margin-top:12px">
+      <div class="card-image">
+        <div style="display:flex;flex-direction:column;height:100%;justify-content:space-between;color:#fff">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="background:linear-gradient(90deg,rgba(255,255,255,0.06),transparent);padding:8px;border-radius:8px;font-weight:700">VISA</div>
+            <div style="font-weight:800;color:var(--accent)">Platinum</div>
+          </div>
+          <div style="font-size:20px;letter-spacing:2px;font-weight:700">● ● ● ● &nbsp;  1234</div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-size:12px;color:var(--muted)">VALID THRU 12/26</div>
+            <div style="font-weight:700">CARDHOLDER</div>
+          </div>
+        </div>
+      </div>
+      <!-- decorative -->
+      <div style="position:absolute;right:8px;top:8px;opacity:.06;font-size:120px;font-weight:800;color:var(--accent)">CM</div>
+    </div>
+  </div>
+</section>
+
+<!-- CARDS -->
+<section class="section" id="cards">
+  <h2>Available Cards</h2>
+  <p class="muted">Click any card to flip and view more details. Hover for subtle motion. Cards and content here are demo data.</p>
+
+  <div class="cards-grid" id="cardsGrid" style="margin-top:16px">
+    <!-- cards are populated by JS -->
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="section" id="pricing">
+  <h2>Pricing Plans</h2>
+  <p class="muted">Choose a plan for premium features and support. Pricing here is sample/demo only.</p>
+  <div style="margin-top:16px" class="pricing-grid" id="pricingGrid">
+    <div class="plan">
+      <div class="title">Silver</div>
+      <div class="price">$4.99 / mo</div>
+      <div class="small">Basic card tracking & comparison</div>
+      <ul>
+        <li>Access to basic card list</li>
+        <li>Monthly newsletter</li>
+        <li>Email support</li>
+      </ul>
+      <div style="margin-top:12px">
+        <button class="btn primary">Choose Silver</button>
+      </div>
+    </div>
+
+    <div class="plan">
+      <div class="title">Gold</div>
+      <div class="price">$12.99 / mo</div>
+      <div class="small">Advanced features, alerts & better visuals</div>
+      <ul>
+        <li>All Silver features</li>
+        <li>Price alerts</li>
+        <li>Advanced filters</li>
+      </ul>
+      <div style="margin-top:12px">
+        <button class="btn primary">Choose Gold</button>
+      </div>
+    </div>
+
+    <div class="plan">
+      <div class="title">Platinum</div>
+      <div class="price">$29.99 / mo</div>
+      <div class="small">Full access, priority support</div>
+      <ul>
+        <li>All Gold features</li>
+        <li>Priority support</li>
+        <li>Custom reports</li>
+      </ul>
+      <div style="margin-top:12px">
+        <button class="btn primary">Choose Platinum</button>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:18px" class="muted small">Payment methods (demo): Bitcoin, Ethereum, and other cryptocurrencies. This is a UI demo only — no real payments processed here.</div>
+</section>
+
+<!-- CONTACT -->
+<section class="section" id="contact">
+  <h2>Contact Us</h2>
+  <p class="muted">Questions or feedback? Use the contact form or the details below.</p>
+
+  <div class="contact-grid" style="margin-top:12px">
+    <div>
+      <div class="contact-panel">
+        <div class="contact-item">
+          <div class="icon-box">
+            <!-- mail icon -->
+            <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#fff" d="M2 6.5v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-11a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Zm2 0 8 5 8-5" /></svg>
+          </div>
+          <div>
+            <div style="font-weight:700">Email</div>
+            <div class="small">cropaso@hotmail.com</div>
+          </div>
+        </div>
+
+        <div class="contact-item">
+          <div class="icon-box">
+            <!-- phone icon -->
+            <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#fff" d="M6.6 10.8a15 15 0 0 0 6.6 6.6l2.1-2.1a1 1 0 0 1 1.1-.2c1.2.5 2.5.8 3.8.8a1 1 0 0 1 1 1v3.4a1 1 0 0 1-1 1C9.6 21 3 14.4 3 6a1 1 0 0 1 1-1h3.4a1 1 0 0 1 1 1c0 1.3.3 2.6.8 3.8a1 1 0 0 1-.2 1.1L6.6 10.8z"/></svg>
+          </div>
+          <div>
+            <div style="font-weight:700">Phone</div>
+            <div class="small">+1 xxxxxxxxxx</div>
+          </div>
+        </div>
+
+        <div class="contact-item">
+          <div class="icon-box">
+            <!-- location icon -->
+            <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#fff" d="M12 2C8.1 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3.1-7-7-7zm0 9.5A2.5 2.5 0 1 1 14.5 9 2.5 2.5 0 0 1 12 11.5z"/></svg>
+          </div>
+          <div>
+            <div style="font-weight:700">Location</div>
+            <div class="small">USA</div>
+          </div>
+        </div>
+
+        <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03);margin:12px 0">
+
+        <form id="contactForm" novalidate>
+          <input class="input" id="contactName" placeholder="Your name" required />
+          <input class="input" id="contactEmail" placeholder="Your email" type="email" required />
+          <textarea class="input" id="contactMessage" rows="5" placeholder="Message" required></textarea>
+          <div style="display:flex;gap:10px;align-items:center;justify-content:space-between">
+            <div class="small muted">We will reply within 48 hours (demo).</div>
+            <button class="btn primary" type="submit">Send Message</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div>
+      <div class="contact-panel">
+        <h3 style="margin:0 0 8px 0">Payment Methods (Demo)</h3>
+        <div class="small muted">Displayed for UI learning purposes only.</div>
+
+        <div style="display:flex;gap:12px;margin-top:12px">
+          <!-- Bitcoin -->
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px;border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border:1px solid rgba(255,255,255,0.02);width:120px">
+            <svg width="36" height="36" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#f7931a"></circle><text x="12" y="16" font-size="12" font-weight="700" text-anchor="middle" fill="#fff" font-family="Inter">B</text></svg>
+            <div style="font-weight:700">Bitcoin</div>
+            <div class="small muted">BTC</div>
+          </div>
+
+          <!-- Ethereum -->
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px;border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border:1px solid rgba(255,255,255,0.02);width:120px">
+            <svg width="36" height="36" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#627eea"></circle><text x="12" y="16" font-size="12" font-weight="700" text-anchor="middle" fill="#fff" font-family="Inter">Ξ</text></svg>
+            <div style="font-weight:700">Ethereum</div>
+            <div class="small muted">ETH</div>
+          </div>
+        </div>
+
+        <div style="margin-top:16px" class="small muted">Note: In a real product you would integrate a payment gateway and perform proper KYC/AML checks. This demo intentionally omits payment processing and any illegal features.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LOGIN / REGISTER MODALS (simple) -->
+<div id="modal" style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);z-index:120">
+  <div style="width:420px;max-width:94%;background:linear-gradient(180deg,#0f0f0f,#111);padding:18px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div id="modalTitle" style="font-weight:800">Login</div>
+      <button id="modalClose" class="btn ghost">✕</button>
+    </div>
+    <div id="modalBody" style="margin-top:12px">
+      <!-- forms injected by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div>
+      <div style="font-weight:800">CardMarket</div>
+      <div class="small muted">Demo for learning — no real transactions</div>
+    </div>
+
+    <div class="socials">
+      <div class="small muted">Made for learning • © Demo</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ===== Demo Data ===== */
+const demoCards = [
+  { id:1, name:'Platinum Rewards', provider:'VISA', price:'$199/yr', desc:'High cashback, travel perks', features:['5% cashback','Airport lounge access','No FX fee'] },
+  { id:2, name:'Gold Travel', provider:'MASTERCARD', price:'$149/yr', desc:'Travel-friendly, points', features:['3x points travel','Concierge','Priority boarding'] },
+  { id:3, name:'Everyday Cash', provider:'VISA', price:'$49/yr', desc:'Low fee, simple cashback', features:['1.5% cashback','No annual fee first year','App controls'] },
+  { id:4, name:'Student Starter', provider:'VISA', price:'$19/yr', desc:'Designed for students', features:['Credit building tools','Low APR','Rewards on groceries'] },
+  { id:5, name:'Business Elite', provider:'AMEX', price:'$299/yr', desc:'Business perks & reporting', features:['Expense reporting','Higher spend limits','Travel insurance'] },
+  { id:6, name:'Secured Builder', provider:'MASTERCARD', price:'$9/mo', desc:'Secured card for building credit', features:['Deposit-backed','Reports to bureaus','Low fees'] }
+];
+
+/* ===== Render cards grid ===== */
+function createCardHTML(card){
+  return `
+  <div class="card-wrap">
+    <div class="flip-container" data-id="${card.id}">
+      <div class="flippable" id="flippable-${card.id}">
+        <div class="card-face card-front">
+          <div class="card-top">
+            <div class="chip"></div>
+            <div class="card-logo">${card.provider}</div>
+          </div>
+          <div>
+            <div class="card-name">${card.name}</div>
+            <div class="card-desc">${card.desc}</div>
+          </div>
+          <div class="card-footer">
+            <div class="price-tag">${card.price}</div>
+            <button class="view-btn" data-action="flip" data-id="${card.id}">View</button>
+          </div>
+        </div>
+        <div class="card-face card-back">
+          <div>
+            <div style="font-weight:800">${card.name}</div>
+            <div class="small muted" style="margin-top:6px">Features</div>
+            <div style="margin-top:10px" class="features">${card.features.map(f=>`<div class="feature">${f}</div>`).join('')}</div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div class="small muted">Demo details</div>
+            <button class="view-btn" data-action="flip" data-id="${card.id}">Back</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+const cardsGrid = document.getElementById('cardsGrid');
+cardsGrid.innerHTML = demoCards.map(createCardHTML).join('');
+
+/* Attach flip listeners */
+cardsGrid.querySelectorAll('[data-action="flip"]').forEach(btn=>{
+  btn.addEventListener('click', (e)=>{
+    const id = e.currentTarget.dataset.id;
+    const flippable = document.getElementById('flippable-'+id);
+    flippable.classList.toggle('flipped');
+  });
+});
+
+/* Add hover 3D tilt (subtle) */
+cardsGrid.querySelectorAll('.card-wrap').forEach(wrap=>{
+  const flippable = wrap.querySelector('.flippable');
+  wrap.addEventListener('mousemove', (ev)=>{
+    const r = wrap.getBoundingClientRect();
+    const px = (ev.clientX - r.left)/r.width;
+    const py = (ev.clientY - r.top)/r.height;
+    const rx = (py - 0.5) * 6; // tilt degrees
+    const ry = (px - 0.5) * -8;
+    flippable.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
+  });
+  wrap.addEventListener('mouseleave', ()=>{
+    flippable.style.transform = '';
+  });
+});
+
+/* ===== Modal (Login/Register) ===== */
+const modal = document.getElementById('modal');
+const modalBody = document.getElementById('modalBody');
+const modalTitle = document.getElementById('modalTitle');
+document.getElementById('loginBtn').addEventListener('click', ()=>openModal('login'));
+document.getElementById('registerBtn').addEventListener('click', ()=>openModal('register'));
+document.getElementById('mobileLogin').addEventListener('click', ()=>{closeMobileMenu();openModal('login')});
+document.getElementById('mobileRegister').addEventListener('click', ()=>{closeMobileMenu();openModal('register')});
+document.getElementById('modalClose').addEventListener('click', closeModal);
+modal.addEventListener('click', (e)=>{ if(e.target===modal) closeModal(); });
+
+function openModal(type){
+  modal.style.display = 'flex';
+  if(type==='login'){
+    modalTitle.textContent = 'Login';
+    modalBody.innerHTML = `
+      <form id="loginForm" novalidate>
+        <input class="input" id="loginEmail" placeholder="Email" type="email" required />
+        <input class="input" id="loginPassword" placeholder="Password" type="password" required />
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+          <div class="small muted"><label style="cursor:pointer"><input type="checkbox" id="remember"> Remember</label></div>
+          <button class="btn primary" type="submit">Sign In</button>
+        </div>
+      </form>`;
+    document.getElementById('loginForm').addEventListener('submit', (e)=>{
+      e.preventDefault();
+      // simple validation demo
+      const email = document.getElementById('loginEmail').value.trim();
+      const pw = document.getElementById('loginPassword').value.trim();
+      if(!validateEmail(email)){alert('Enter a valid email'); return;}
+      if(pw.length<6){alert('Password too short'); return;}
+      alert('Demo login successful (no real auth).');
+      closeModal();
+    });
+  } else {
+    modalTitle.textContent = 'Register';
+    modalBody.innerHTML = `
+      <form id="registerForm" novalidate>
+        <input class="input" id="regName" placeholder="Full name" required />
+        <input class="input" id="regEmail" placeholder="Email" type="email" required />
+        <input class="input" id="regPassword" placeholder="Password (min 6)" type="password" required />
+        <input class="input" id="regConfirm" placeholder="Confirm password" type="password" required />
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+          <div class="small muted">By registering you accept demo terms</div>
+          <button class="btn primary" type="submit">Create account</button>
+        </div>
+      </form>`;
+    document.getElementById('registerForm').addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const name = document.getElementById('regName').value.trim();
+      const email = document.getElementById('regEmail').value.trim();
+      const pw = document.getElementById('regPassword').value;
+      const conf = document.getElementById('regConfirm').value;
+      if(name.length<2){alert('Enter full name');return;}
+      if(!validateEmail(email)){alert('Enter a valid email'); return;}
+      if(pw.length<6){alert('Password too short'); return;}
+      if(pw!==conf){alert('Passwords do not match'); return;}
+      alert('Demo registration complete. No real account created.');
+      closeModal();
+    });
+  }
+}
+function closeModal(){ modal.style.display='none'; modalBody.innerHTML=''; }
+
+/* ===== Contact form validation ===== */
+document.getElementById('contactForm').addEventListener('submit', (e)=>{
+  e.preventDefault();
+  const name = document.getElementById('contactName').value.trim();
+  const email = document.getElementById('contactEmail').value.trim();
+  const message = document.getElementById('contactMessage').value.trim();
+  if(name.length<2){alert('Please enter your name'); return;}
+  if(!validateEmail(email)){alert('Enter a valid email'); return;}
+  if(message.length<6){alert('Message is too short'); return;}
+  alert('Message sent (demo). Thanks! We will reply to ' + email + ' (demo only).');
+  document.getElementById('contactForm').reset();
+});
+
+/* simple email regex */
+function validateEmail(email){
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+/* ===== Mobile menu ===== */
+const hamburger = document.getElementById('hamburger');
+const mobileMenu = document.getElementById('mobileMenu');
+hamburger.addEventListener('click', ()=> mobileMenu.classList.toggle('show'));
+function closeMobileMenu(){ mobileMenu.classList.remove('show'); }
+
+/* close mobile when link clicked */
+mobileMenu.querySelectorAll('.mobile-link').forEach(a=>{
+  a.addEventListener('click', ()=> closeMobileMenu());
+});
+
+/* ===== Smooth reveal of elements on load ===== */
+document.querySelectorAll('.fade-up').forEach((el,i)=> {
+  el.style.animationDelay = (i*80)+'ms';
+});
+
+/* ===== Accessibility: close modal with Esc ===== */
+document.addEventListener('keydown', (e)=>{ if(e.key==='Escape'){ closeModal(); closeMobileMenu(); } });
+
+/* Notes for learners:
+ - This demo intentionally avoids any backend or payment processing.
+ - To expand: add a backend (Node/Express, Flask, etc.), persist users, integrate real payment provider (Stripe, Coinbase Commerce), implement KYC/AML for legal workflows.
+ - Always ensure your product is lawful and complies with regulations.
+*/
+</script>
+</body>
+</html>
